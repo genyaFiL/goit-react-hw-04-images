@@ -1,27 +1,23 @@
-import { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Searchbar from './Searchbar/Searchbar';
 import { PixabayAPI } from '../services/Pixabay';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Button from './Button/Button';
 import Loader from './Loader/Loader';
-
 import Notiflix from 'notiflix';
 import css from './AppStyles.module.css';
 
 const pixabayAPI = new PixabayAPI();
 
-class App extends Component {
-  state = {
-    searchQuery: '',
-    images: [],
-    loading: false,
-    endTotalHits: false,
-    showModal: false,
-    page: 1,
-  };
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [endTotalHits, setEndTotalHits] = useState(false);
+  const [page, setPage] = useState(1);
 
-  async searchPhotos() {
-    this.setState({ loading: true });
+  const searchPhotos = async () => {
+    setLoading(true);
     try {
       if (!pixabayAPI.q) {
         Notiflix.Notify.warning(
@@ -30,7 +26,6 @@ class App extends Component {
         return;
       }
 
-      const { page } = this.state;
       const { data } = await pixabayAPI.fetchPhotos(page);
 
       if (!data.hits.length) {
@@ -40,62 +35,52 @@ class App extends Component {
         return;
       }
 
-      this.setState(prevState => ({
-        images: [...prevState.images, ...data.hits],
-      }));
+      setImages(prevImages => [...prevImages, ...data.hits]);
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images`);
 
-      if (data.totalHits <= this.state.page * pixabayAPI.perPage) {
-        this.setState({ endTotalHits: true });
-
+      if (data.totalHits <= page * pixabayAPI.perPage) {
+        setEndTotalHits(true);
         Notiflix.Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
       } else {
-        this.setState({ endTotalHits: false });
+        setEndTotalHits(false);
       }
     } catch (err) {
     } finally {
-      this.setState({ loading: false });
+      setLoading(false);
     }
-  }
+  };
 
-  onSubmit = value => {
-    if (value === this.state.searchQuery) {
+  const onSubmit = value => {
+    if (value === searchQuery) {
       return Notiflix.Notify.info(
-        `You are currently viewing this query "${this.state.searchQuery}", try another query `
+        `You are currently viewing this query "${searchQuery}", try another query `
       );
     }
 
-    this.setState({ images: [], searchQuery: value, page: 1 });
+    setImages([]);
+    setSearchQuery(value);
+    setPage(1);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  componentDidUpdate = async (_, prevState) => {
-    pixabayAPI.q = this.state.searchQuery.trim();
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      this.state.page !== prevState.page
-    )
-      this.searchPhotos();
-  };
+  useEffect(() => {
+    pixabayAPI.q = searchQuery.trim();
+    searchPhotos();
+  }, [searchQuery, page]);
 
-  render() {
-    const { loading, images, endTotalHits } = this.state;
-    return (
-      <div className={css.app}>
-        <Searchbar onSubmit={this.onSubmit} />
-        {this.state.images && <ImageGallery images={images} />}
-        {loading && <Loader />}
-        {images.length > 0 && !endTotalHits && !loading && (
-          <Button handleLoadMore={this.handleLoadMore} />
-        )}
-      </div>
-    );
-  }
+  return (
+    <div className={css.app}>
+      <Searchbar onSubmit={onSubmit} />
+      {images.length > 0 && <ImageGallery images={images} />}
+      {loading && <Loader />}
+      {!endTotalHits && !loading && images.length > 0 && (
+        <Button handleLoadMore={handleLoadMore} />
+      )}
+    </div>
+  );
 }
-
-export default App;

@@ -1,39 +1,51 @@
-import { Component } from 'react';
+import { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import css from './ModalStyles.module.css';
 
-class Modal extends Component {
-  componentDidMount = () => {
-    document.addEventListener('keydown', this.handleKeyDown);
-  };
-  componentWillUnmount = () => {
-    document.removeEventListener('keydown', this.handleKeyDown);
-  };
+export default function Modal({ src, alt, toggle }) {
+  const overlayClickRef = useRef();
 
-  handleKeyDown = e => {
+  // //cdm
+  // useEffect(() => {
+  //   document.addEventListener('keydown', handleKeyDown);
+  // }, []);
+  // //cwu
+  // useEffect(() => {
+  //   return () => {
+  //     document.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, []);
+
+  //cdm+cdu
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleKeyDown = e => {
     if (e.code === 'Escape') {
-      this.props.toggle();
+      toggle();
     }
   };
 
-  handleOverlayClick = e => {
+  const handleOverlayClick = e => {
     if (e.target === e.currentTarget) {
-      this.props.toggle();
+      toggle();
     }
   };
 
-  render() {
-    const { src, alt } = this.props;
-    return (
-      <div className={css.overlay} onClick={this.handleOverlayClick}>
-        <div className={css.modal}>
-          <img src={src} alt={alt} />
-        </div>
+  return (
+    <div
+      ref={overlayClickRef}
+      className={css.overlay}
+      onClick={handleOverlayClick}
+    >
+      <div className={css.modal}>
+        <img src={src} alt={alt} />
       </div>
-    );
-  }
+    </div>
+  );
 }
-export default Modal;
 
 Modal.propTypes = {
   toggle: PropTypes.func.isRequired,
