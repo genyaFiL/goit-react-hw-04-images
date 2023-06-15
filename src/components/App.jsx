@@ -55,7 +55,7 @@ export default function App() {
   const onSubmit = value => {
     if (value === searchQuery) {
       return Notiflix.Notify.info(
-        `You are currently viewing this query "${searchQuery}", try another query `
+        `You are currently viewing this query "${searchQuery}", try another query`
       );
     }
 
