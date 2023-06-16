@@ -18,15 +18,14 @@ export default function Modal({ src, alt, toggle }) {
 
   //cdm+cdu
   useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.code === 'Escape') {
+        toggle();
+      }
+    };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      toggle();
-    }
-  };
+  }, [toggle]);
 
   const handleOverlayClick = e => {
     if (e.target === e.currentTarget) {
